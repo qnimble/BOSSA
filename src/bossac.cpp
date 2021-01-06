@@ -336,9 +336,9 @@ main(int argc, char* argv[])
     {
         if (config.help)
             printf("Usage: %s [OPTION...] [FILE]\n", argv[0]);
-        printf("qNimble's Basic Open Source SAM-BA Application (qBOSSA) Version " VERSION "\n"
+        printf("qNimble's Basic Open Source SAM-BA Application (qBOSSA) Version %s \n"
                "Flash programmer for Atmel SAM devices.\n"
-               "Copyright (c) 2011-2018 ShumaTech (http://www.shumatech.com)\n"
+               "Copyright (c) 2011-2018 ShumaTech (http://www.shumatech.com)\n",VERSION
               );
         if (config.help)
         {

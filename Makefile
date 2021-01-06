@@ -24,17 +24,22 @@ OBJDIR=obj
 SRCDIR=src
 RESDIR=res
 INSTALLDIR=install
-
+EXTRA_FLAGS=
 #
 # Determine OS
 #
 OS:=$(shell uname -s | cut -c -7)
-OS_SHORT:=$(shell uname -s | cut -c -5)
-
+ifeq ($(OS),MSYS_NT)
+OS:=WIN
+else ifeq ($(OS),MINGW32)
+OS:=WIN
+else ifeq ($(OS),MINGW64)
+OS:=WIN
+endif
 #
 # Windows rules
 #
-ifeq ($(OS_SHORT),MINGW)
+ifeq ($(OS),WIN)
 # Use wxWindows development branch to work around font scaling issues on Windows
 WXVERSION=3.1
 EXE=.exe
@@ -195,7 +200,7 @@ ARMOBJCOPY=$(ARM)objcopy
 #
 # CXX Flags
 #
-COMMON_CXXFLAGS+=-Wall -Werror -MT $@ -MD -MP -MF $(@:%.o=%.d) -DVERSION=\"$(VERSION)\" -g -O2 $(CXXFLAGS)
+COMMON_CXXFLAGS+=$(EXTRA_FLAGS) -Wall -Werror -MT $@ -MD -MP -MF $(@:%.o=%.d) -DVERSION=\"$(VERSION)\" -g -O2 $(CXXFLAGS)
 WX_CXXFLAGS:=$(shell wx-config --cxxflags --version=$(WXVERSION)) -DWX_PRECOMP -Wno-ctor-dtor-privacy -O2 -fno-strict-aliasing
 BOSSA_CXXFLAGS=$(COMMON_CXXFLAGS) $(WX_CXXFLAGS)
 BOSSAC_CXXFLAGS=$(COMMON_CXXFLAGS)
@@ -204,7 +209,7 @@ BOSSASH_CXXFLAGS=$(COMMON_CXXFLAGS)
 #
 # LD Flags
 #
-COMMON_LDFLAGS+=-g $(LDFLAGS)
+COMMON_LDFLAGS+=$(EXTRA_FLAGS) -g $(LDFLAGS)
 BOSSA_LDFLAGS=$(COMMON_LDFLAGS)
 BOSSAC_LDFLAGS=$(COMMON_LDFLAGS)
 BOSSASH_LDFLAGS=$(COMMON_LDFLAGS)
