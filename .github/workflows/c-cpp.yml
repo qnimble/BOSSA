@@ -33,32 +33,39 @@ jobs:
         include:
           - os: ubuntu-latest
             artifact_name: bin/bossac
-            asset_name: qbossa
+            asset_name: qbossac
             arch: amd64
             suffix: -linux-amd64
+            archive_ext: .tar.bz2
           - os: ubuntu-latest
             artifact_name: bin/bossac
-            asset_name: qbossa
+            asset_name: qbossac
             arch: i686
             suffix: -linux-i686
             make_flags: "EXTRA_FLAGS=-m32"
+            archive_ext: .tar.bz2
           - os: windows-latest
-            artifact_name: bin/bossac.exe
-            asset_name: qbossa
+            artifact_name: bin/bossac
+            asset_name: qbossac
             arch: i686
             msystem: MINGW32
-            suffix: -win32.exe
+            suffix: -win32
+            ext: .exe
+            archive_ext: .zip
           - os: windows-latest
-            artifact_name: bin/bossac.exe
-            asset_name: qbossa
+            artifact_name: bin/bossac
+            asset_name: qbossac
             arch: x86_64
             msystem: MINGW64
-            suffix: -win64.exe
+            suffix: -win64
+            archive_ext: .zip
+            ext: .exe
           - os: macos-latest
             artifact_name: bin/bossac
-            asset_name: qbossa
+            asset_name: qbossac
             arch: amd64
             suffix: -mac
+            archive_ext: .tar.bz2
 
     steps:      
     - uses: actions/checkout@v2
@@ -80,18 +87,35 @@ jobs:
       run:  |
             git reset --hard
             make bossac
+            mkdir qbossa-${{env.GITHUB_REF_SLUG}}
+            cp bin/bossac.exe qbossa-${{env.GITHUB_REF_SLUG}}/qbossac.exe
+            zip bin/bossac.zip qbossa-${{env.GITHUB_REF_SLUG}}/*
+            ls qbossa-${{env.GITHUB_REF_SLUG}}
     - name: make (not win)
       if: ${{matrix.os != 'windows-latest'}}
       run: |
-          make -n bossac ${{matrix.make_flags}}
+          #make -n bossac ${{matrix.make_flags}}
           make bossac ${{matrix.make_flags}}
-    - name: Upload file
+          mkdir qbossa-${{env.GITHUB_REF_SLUG}}
+          cp bin/bossac qbossa-${{env.GITHUB_REF_SLUG}}/qbossac
+          tar -cjf bin/bossac.tar.bz2 qbossa-${{env.GITHUB_REF_SLUG}}
+          ls qbossa-${{env.GITHUB_REF_SLUG}}
+    - name: Upload file (Binary)
       uses: actions/upload-release-asset@v1
       env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
       with:
           upload_url: ${{ needs.create_release.outputs.upload_url }}
-          asset_path: ${{matrix.artifact_name}}
-          asset_name: ${{matrix.asset_name}}-${{env.GITHUB_REF_SLUG}}${{matrix.suffix}}
-          #asset_label: ${{matrix.os}}-${{matrix.arch}}
+          asset_path: ${{matrix.artifact_name}}${{matrix.ext}}
+          asset_name: ${{matrix.asset_name}}-${{env.GITHUB_REF_SLUG}}${{matrix.suffix}}${{matrix.ext}}
+          asset_content_type: application/octet-stream
+
+    - name: Upload file (Archive)
+      uses: actions/upload-release-asset@v1
+      env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+      with:
+          upload_url: ${{ needs.create_release.outputs.upload_url }}
+          asset_path: ${{matrix.artifact_name}}${{matrix.archive_ext}}
+          asset_name: ${{matrix.asset_name}}-${{env.GITHUB_REF_SLUG}}${{matrix.suffix}}${{matrix.archive_ext}}
           asset_content_type: application/octet-stream
