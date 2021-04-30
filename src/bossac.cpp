@@ -371,10 +371,12 @@ main(int argc, char* argv[])
             SerialPort::Ptr port;
             port = portFactory.create(config.portArg, config.usbPortArg != 0);
 
-            printf("Arduino 1200 baud reset\n");
+            if (config.debug)
+                printf("Arduino 1200 baud reset\n");
             if(!port->open(1200))
             {
-                fprintf(stderr, "Failed to open port at 1200bps\n");
+                printf("Failed to open port %s\n",config.portArg.c_str());
+                fprintf(stderr, "Failed to open port for baud knocking\n");
                 return 1;
             }
 
