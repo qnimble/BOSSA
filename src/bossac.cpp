@@ -135,12 +135,21 @@ BossaObserver::onProgress(int num, int div)
 {
     int ticks;
     int bars = 30;
+    static struct timeval lasttime = {0,0};
 
     ticks = num * bars / div;
-    
+
     if (ticks == _lastTicks)
         return;
-    
+
+    struct timeval now;
+    gettimeofday(&now,NULL);
+
+    if ( (now.tv_sec == lasttime.tv_sec) && (now.tv_usec >= lasttime.tv_usec + 300000)) {
+        //We did display update within 300ms, so we can skip
+        return;
+    }
+
     printf("\r[");
     while (ticks-- > 0)
     {
