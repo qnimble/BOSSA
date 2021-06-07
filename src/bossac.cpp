@@ -147,6 +147,7 @@ BossaObserver::onProgress(int num, int div)
 
     if ( (now.tv_sec == lasttime.tv_sec) && (now.tv_usec >= lasttime.tv_usec + 300000)) {
         //We did display update within 300ms, so we can skip
+        printf("skip\r\n");
         return;
     }
 
