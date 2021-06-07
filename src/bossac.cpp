@@ -135,12 +135,20 @@ BossaObserver::onProgress(int num, int div)
 {
     int ticks;
     int bars = 30;
+    static struct timeval lasttime = {0,0};
 
     ticks = num * bars / div;
-    
+
     if (ticks == _lastTicks)
         return;
-    
+
+    struct timeval now;
+    gettimeofday(&now,NULL);
+    if ( (now.tv_sec == lasttime.tv_sec) && (now.tv_usec < lasttime.tv_usec + 100000) && (num != div) ) {
+        //Not last update and previous update was within 200ms, so skip to reduce number of screen updates.
+        return;
+    }
+
     printf("\r[");
     while (ticks-- > 0)
     {
@@ -153,7 +161,7 @@ BossaObserver::onProgress(int num, int div)
     }
     printf("] %d%% (%d/%d pages)", num * 100 / div, num, div);
     fflush(stdout);
-    
+    gettimeofday(&lasttime,NULL);
     _lastTicks = 0;
 }
 
