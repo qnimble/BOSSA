@@ -367,6 +367,7 @@ main(int argc, char* argv[])
     {
         Samba samba;
         PortFactory portFactory;
+        int loops = 1;
 
         if (config.debug)
             samba.setDebug(true);
@@ -393,8 +394,7 @@ main(int argc, char* argv[])
             port->close();
 
             // wait for chip to reboot and USB port to re-appear
-            sleep(1);
-
+            loops = 15;
             if (config.debug)
                 printf("Arduino reset done\n");
         }
@@ -406,14 +406,24 @@ main(int argc, char* argv[])
         }
 
         bool res;
-        if (config.usbPort)
-            res = samba.connect(portFactory.create(config.portArg, config.usbPortArg != 0));
-        else
-            res = samba.connect(portFactory.create(config.portArg));
-        if (!res)
-        {
-            fprintf(stderr, "No device found on %s\n", config.portArg.c_str());
-            return 1;
+        for(int i=0;i<loops;i++) {
+            if (config.usbPort)
+                res = samba.connect(portFactory.create(config.portArg, config.usbPortArg != 0));
+            else
+               res = samba.connect(portFactory.create(config.portArg));
+            usleep(100000);
+            if (res) {
+               printf("Restablished Connection on loop=%d\n",i);
+               break;
+            }
+            //if (config.debug) {
+               //printf("No Comm Connection, waiting for reset (loop=%d, res=%d)\n",i,res);
+            //}
+        }
+            if (!res)
+            {
+                fprintf(stderr, "No device found on %s\n", config.portArg.c_str());
+                return 1;
         }
 
         Device device(samba);
