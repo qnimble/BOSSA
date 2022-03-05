@@ -395,6 +395,7 @@ main(int argc, char* argv[])
 
             // wait for chip to reboot and USB port to re-appear
             loops = 15;
+            usleep(200000); //add delay for udev in linux to test the right port
             if (config.debug)
                 printf("Arduino reset done\n");
         }
@@ -410,8 +411,7 @@ main(int argc, char* argv[])
             if (config.usbPort)
                 res = samba.connect(portFactory.create(config.portArg, config.usbPortArg != 0));
             else
-               res = samba.connect(portFactory.create(config.portArg));
-            usleep(100000);
+                res = samba.connect(portFactory.create(config.portArg));
             if (res) {
                printf("Restablished Connection on loop=%d\n",i);
                break;
@@ -419,6 +419,7 @@ main(int argc, char* argv[])
             //if (config.debug) {
                //printf("No Comm Connection, waiting for reset (loop=%d, res=%d)\n",i,res);
             //}
+            usleep(100000);
         }
             if (!res)
             {
