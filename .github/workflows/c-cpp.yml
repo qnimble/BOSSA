@@ -79,7 +79,7 @@ jobs:
       if: ${{matrix.os == 'windows-latest'}}
       with:
           msystem: ${{ matrix.msystem }}
-          install: git base-devel binutils mingw-w64-${{ matrix.arch }}-toolchain
+          install: git zip base-devel binutils mingw-w64-${{ matrix.arch }}-toolchain
           release: false
     - name: make (win)
       if: ${{matrix.os == 'windows-latest'}}
