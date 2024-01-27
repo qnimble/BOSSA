@@ -161,6 +161,8 @@ Samba::connect(SerialPort::Ptr port, int bps)
     _isUsb = false;
 
     // Try the serial port at slower speed
+/*  qNimble devices do not need to try to connect a lower speed */
+/*
     if (_port->open(bps) && init())
     {
         if (_debug)
@@ -168,6 +170,7 @@ Samba::connect(SerialPort::Ptr port, int bps)
         return true;
     }
 
+*/
     disconnect();
     return false;
 }

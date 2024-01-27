@@ -33,6 +33,7 @@
 #include <stdio.h>
 
 #include <string>
+#include <filesystem>
 
 LinuxPortFactory::LinuxPortFactory()
 {
@@ -60,6 +61,10 @@ LinuxPortFactory::create(const std::string& name)
 SerialPort::Ptr
 LinuxPortFactory::create(const std::string& name, bool isUsb)
 {
+	// Safety: if device not in file system, do not try to open as it can confuse linux naming of ports
+        if (!std::filesystem::exists(name)) {
+                return SerialPort::Ptr(new PosixSerialPort(std::string(""),false));
+	}
     return SerialPort::Ptr(new PosixSerialPort(name, isUsb));
 }
 

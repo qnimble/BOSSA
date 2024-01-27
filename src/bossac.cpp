@@ -388,14 +388,15 @@ main(int argc, char* argv[])
                 fprintf(stderr, "Failed to open port for baud knocking\n");
                 return 1;
             }
-
             port->setRTS(true);
             port->setDTR(false);
             port->close();
-
             // wait for chip to reboot and USB port to re-appear
             loops = 15;
-            usleep(200000); //add delay for udev in linux to test the right port
+            usleep(200000); //add delay for device to reset
+#if defined(__linux__)
+            usleep(200000); //add extra delay for udev in linux so port number not changed
+#endif
             if (config.debug)
                 printf("Arduino reset done\n");
         }
