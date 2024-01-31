@@ -367,6 +367,7 @@ main(int argc, char* argv[])
     {
         Samba samba;
         PortFactory portFactory;
+        SerialPort::Ptr port;
         int loops = 1;
 
         if (config.debug)
@@ -377,7 +378,6 @@ main(int argc, char* argv[])
 
         if (config.arduinoErase)
         {
-            SerialPort::Ptr port;
             port = portFactory.create(config.portArg, config.usbPortArg != 0);
 
             if (config.debug)
@@ -390,13 +390,11 @@ main(int argc, char* argv[])
             }
             port->setRTS(true);
             port->setDTR(false);
-            port->close();
+
+            //port->close();  //keep open so read/write will fail and we know when device disconnects. Avoid issue with port renaming under Linux
             // wait for chip to reboot and USB port to re-appear
             loops = 15;
             usleep(200000); //add delay for device to reset
-#if defined(__linux__)
-            usleep(200000); //add extra delay for udev in linux so port number not changed
-#endif
             if (config.debug)
                 printf("Arduino reset done\n");
         }
@@ -409,10 +407,19 @@ main(int argc, char* argv[])
 
         bool res;
         for(int i=0;i<loops;i++) {
-            if (config.usbPort)
-                res = samba.connect(portFactory.create(config.portArg, config.usbPortArg != 0));
-            else
-                res = samba.connect(portFactory.create(config.portArg));
+            if (config.usbPort) {
+                if (port) {
+                    res = samba.reconnect(std::move(port));
+                } else {
+                    res = samba.connect(portFactory.create(config.portArg, config.usbPortArg != 0));
+                }
+            } else {
+                if (port) {
+                    res = samba.reconnect(std::move(port));
+                } else {
+                    res = samba.connect(portFactory.create(config.portArg));
+                }
+            }
             if (res) {
                printf("Restablished Connection on loop=%d\n",i);
                break;

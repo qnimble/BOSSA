@@ -36,7 +36,6 @@
 #include <termios.h>
 #include <errno.h>
 #include <sys/ioctl.h>
-
 #include <string>
 
 #ifndef B460800
@@ -241,6 +240,13 @@ PosixSerialPort::read(uint8_t* buffer, int len)
         }
         else if (FD_ISSET(_devfd, &fds))
         {
+            size_t len = 0;
+            ioctl(_devfd,FIONREAD, &len);
+            if (len == 0) {
+                 // Error with device
+                return -1;
+            }
+
             retval = ::read(_devfd, (uint8_t*) buffer + numread, len - numread);
             if (retval < 0)
                 return -1;

@@ -72,12 +72,14 @@ bool
 Samba::init()
 {
     uint8_t cmd[3];
-
     _port->timeout(TIMEOUT_QUICK);
-
     // Flush garbage
     uint8_t dummy[1024];
-    _port->read(dummy, sizeof(dummy));
+    int res = _port->read(dummy, sizeof(dummy));
+    if (res == -1 ) {
+        //error with dummy read
+        return false;
+    }
 
     if (!_isUsb)
     {
@@ -139,10 +141,35 @@ Samba::init()
 }
 
 bool
-Samba::connect(SerialPort::Ptr port, int bps)
+Samba::reconnect(SerialPort::Ptr port, int bps)
 {
     _port = move(port);
 
+    // Try to connect at a high speed if USB
+    _isUsb = _port->isUsb();
+    if (_isUsb)
+    {
+        if ( init())
+        {
+            if (_debug)
+                printf("Connected at 921600 baud\n");
+            return true;
+        }
+        else
+        {
+            _port->close();
+        }
+    }
+    _isUsb = false;
+    disconnect();
+    return false;
+}
+
+
+bool
+Samba::connect(SerialPort::Ptr port, int bps)
+{
+    _port = move(port);
     // Try to connect at a high speed if USB
     _isUsb = _port->isUsb();
     if (_isUsb)
