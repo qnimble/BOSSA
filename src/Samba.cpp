@@ -143,7 +143,7 @@ Samba::init()
 bool
 Samba::reconnect(SerialPort::Ptr port, int bps)
 {
-    _port = move(port);
+    _port = std::move(port);
 
     // Try to connect at a high speed if USB
     _isUsb = _port->isUsb();
@@ -169,7 +169,7 @@ Samba::reconnect(SerialPort::Ptr port, int bps)
 bool
 Samba::connect(SerialPort::Ptr port, int bps)
 {
-    _port = move(port);
+    _port = std::move(port);
     // Try to connect at a high speed if USB
     _isUsb = _port->isUsb();
     if (_isUsb)
