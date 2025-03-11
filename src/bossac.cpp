@@ -390,11 +390,8 @@ main(int argc, char* argv[])
             }
             port->setRTS(true);
             port->setDTR(false);
-#if defined(__WIN32__)
-            port->close();  //keep open (mac / linux) so read/write will fail and we know when device disconnects.
-                            //Avoids issue with port renaming under Linux
-                            //Windows reconnects silently and won't fail and can cause sending commands to application instead of bootloader
-#endif
+
+            //port->close();  //keep open so read/write will fail and we know when device disconnects. Avoid issue with port renaming under Linux
             // wait for chip to reboot and USB port to re-appear
             loops = 15;
             usleep(200000); //add delay for device to reset
