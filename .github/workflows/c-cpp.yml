@@ -7,7 +7,7 @@ on:
 jobs:    
   create_release:
     name: Create Release
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-22.04
     outputs:
       upload_url: ${{ steps.create_release.outputs.upload_url }}
     steps:
@@ -31,13 +31,13 @@ jobs:
     strategy:
       matrix:
         include:
-          - os: ubuntu-latest
+          - os: ubuntu-22.04
             artifact_name: bin/bossac
             asset_name: qbossac
             arch: amd64
             suffix: -linux-amd64
             archive_ext: .tar.bz2
-          - os: ubuntu-latest
+          - os: ubuntu-22.04
             artifact_name: bin/bossac
             asset_name: qbossac
             arch: i686
@@ -72,7 +72,7 @@ jobs:
     - name: Inject slug/short variables
       uses: rlespinasse/github-slug-action@v3.x            
     - name: get linux multilib
-      if: ${{matrix.os == 'ubuntu-latest'}}
+      if: ${{ startsWith(matrix.os, 'ubuntu') }}
       run: sudo apt-get update; sudo apt-get install gcc-multilib g++-multilib
     - name: get msys2
       uses: msys2/setup-msys2@v2
