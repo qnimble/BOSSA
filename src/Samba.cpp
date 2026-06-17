@@ -74,7 +74,7 @@ Samba::init()
     uint8_t cmd[3];
     _port->timeout(TIMEOUT_QUICK);
     // Flush garbage
-    uint8_t dummy[1024];
+    uint8_t dummy[1024*32];
     int res = _port->read(dummy, sizeof(dummy));
     if (res == -1 ) {
         //error with dummy read

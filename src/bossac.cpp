@@ -390,7 +390,7 @@ main(int argc, char* argv[])
             }
             port->setRTS(true);
             port->setDTR(false);
-
+            port->flush();
             //port->close();  //keep open so read/write will fail and we know when device disconnects. Avoid issue with port renaming under Linux
             // wait for chip to reboot and USB port to re-appear
             loops = 15;
