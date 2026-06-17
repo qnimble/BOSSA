@@ -4,31 +4,13 @@ on:
   create:
     tags:
       - '*'
-jobs:    
-  create_release:
-    name: Create Release
-    runs-on: ubuntu-22.04
-    outputs:
-      upload_url: ${{ steps.create_release.outputs.upload_url }}
-    steps:
-      - name: Inject slug/short variables
-        uses: rlespinasse/github-slug-action@v3.x
-      - name: Create release
-        id: create_release
-        uses: actions/create-release@v1
-        env:
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-        with:
-          tag_name: ${{ github.ref }}
-          release_name: ${{env.GITHUB_REF_SLUG}}
-          body: "Release ${{env.GITHUB_REF_SLUG}} of qNimble verion of BOSSA"
 
-
+jobs:
   build_release:
     name: Publish for ${{ matrix.os }}-${{matrix.arch}}
     runs-on: ${{ matrix.os }}
-    needs: create_release
     strategy:
+      fail-fast: false
       matrix:
         include:
           - os: ubuntu-22.04
@@ -60,20 +42,25 @@ jobs:
             suffix: -win64
             archive_ext: .zip
             ext: .exe
-          - os: macos-latest
+          - os: macos-13
             artifact_name: bin/bossac
             asset_name: qbossac
             arch: amd64
             suffix: -mac
             archive_ext: .tar.bz2
 
-    steps:      
-    - uses: actions/checkout@v2
-    - name: Inject slug/short variables
-      uses: rlespinasse/github-slug-action@v3.x            
+    steps:
+    - uses: actions/checkout@v4
+
+    - name: Get tag name
+      id: tag
+      run: echo "tag=${GITHUB_REF#refs/tags/}" >> $GITHUB_OUTPUT
+      shell: bash
+
     - name: get linux multilib
       if: ${{ startsWith(matrix.os, 'ubuntu') }}
       run: sudo apt-get update; sudo apt-get install gcc-multilib g++-multilib
+
     - name: get msys2
       uses: msys2/setup-msys2@v2
       if: ${{matrix.os == 'windows-latest'}}
@@ -81,41 +68,35 @@ jobs:
           msystem: ${{ matrix.msystem }}
           install: git zip base-devel binutils mingw-w64-${{ matrix.arch }}-toolchain
           release: false
+
     - name: make (win)
       if: ${{matrix.os == 'windows-latest'}}
       shell: msys2 {0}
-      run:  |
+      run: |
             git reset --hard
             make bossac
-            mkdir qbossa-${{env.GITHUB_REF_SLUG}}
-            cp bin/bossac.exe qbossa-${{env.GITHUB_REF_SLUG}}/qbossac.exe
-            zip bin/bossac.zip qbossa-${{env.GITHUB_REF_SLUG}}/*
-            ls qbossa-${{env.GITHUB_REF_SLUG}}
+            mkdir qbossa-${{ steps.tag.outputs.tag }}
+            cp bin/bossac.exe qbossa-${{ steps.tag.outputs.tag }}/qbossac.exe
+            zip bin/bossac.zip qbossa-${{ steps.tag.outputs.tag }}/*
+            ls qbossa-${{ steps.tag.outputs.tag }}
+
     - name: make (not win)
       if: ${{matrix.os != 'windows-latest'}}
       run: |
-          #make -n bossac ${{matrix.make_flags}}
           make bossac ${{matrix.make_flags}}
-          mkdir qbossa-${{env.GITHUB_REF_SLUG}}
-          cp bin/bossac qbossa-${{env.GITHUB_REF_SLUG}}/qbossac
-          tar -cjf bin/bossac.tar.bz2 qbossa-${{env.GITHUB_REF_SLUG}}
-          ls qbossa-${{env.GITHUB_REF_SLUG}}
-    - name: Upload file (Binary)
-      uses: actions/upload-release-asset@v1
-      env:
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-      with:
-          upload_url: ${{ needs.create_release.outputs.upload_url }}
-          asset_path: ${{matrix.artifact_name}}${{matrix.ext}}
-          asset_name: ${{matrix.asset_name}}-${{env.GITHUB_REF_SLUG}}${{matrix.suffix}}${{matrix.ext}}
-          asset_content_type: application/octet-stream
+          mkdir qbossa-${{ steps.tag.outputs.tag }}
+          cp bin/bossac qbossa-${{ steps.tag.outputs.tag }}/qbossac
+          tar -cjf bin/bossac.tar.bz2 qbossa-${{ steps.tag.outputs.tag }}
+          ls qbossa-${{ steps.tag.outputs.tag }}
 
-    - name: Upload file (Archive)
-      uses: actions/upload-release-asset@v1
+    - name: Upload Release Assets
+      uses: softprops/action-gh-release@v2
+      with:
+          tag_name: ${{ steps.tag.outputs.tag }}
+          name: ${{ steps.tag.outputs.tag }}
+          body: "Release ${{ steps.tag.outputs.tag }} of qNimble version of BOSSA"
+          files: |
+            ${{matrix.artifact_name}}${{matrix.ext}}
+            ${{matrix.artifact_name}}${{matrix.archive_ext}}
       env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-      with:
-          upload_url: ${{ needs.create_release.outputs.upload_url }}
-          asset_path: ${{matrix.artifact_name}}${{matrix.archive_ext}}
-          asset_name: ${{matrix.asset_name}}-${{env.GITHUB_REF_SLUG}}${{matrix.suffix}}${{matrix.archive_ext}}
-          asset_content_type: application/octet-stream
