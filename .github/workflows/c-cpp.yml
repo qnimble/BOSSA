@@ -14,20 +14,17 @@ jobs:
       matrix:
         include:
           - os: ubuntu-22.04
-            artifact_name: bin/bossac
             asset_name: qbossac
             arch: amd64
             suffix: -linux-amd64
             archive_ext: .tar.bz2
           - os: ubuntu-22.04
-            artifact_name: bin/bossac
             asset_name: qbossac
             arch: i686
             suffix: -linux-i686
             make_flags: "EXTRA_FLAGS=-m32"
             archive_ext: .tar.bz2
           - os: windows-latest
-            artifact_name: bin/bossac
             asset_name: qbossac
             arch: i686
             msystem: MINGW32
@@ -35,22 +32,21 @@ jobs:
             ext: .exe
             archive_ext: .zip
           - os: windows-latest
-            artifact_name: bin/bossac
             asset_name: qbossac
             arch: x86_64
             msystem: MINGW64
             suffix: -win64
             archive_ext: .zip
             ext: .exe
-          - os: macos-13
-            artifact_name: bin/bossac
+          - os: macos-14
             asset_name: qbossac
-            arch: amd64
-            suffix: -mac
+            arch: universal
+            suffix: -mac-universal
+            make_flags: "EXTRA_FLAGS='-arch arm64'"
             archive_ext: .tar.bz2
 
     steps:
-    - uses: actions/checkout@v4
+    - uses: actions/checkout@v6
 
     - name: Get tag name
       id: tag
@@ -75,28 +71,25 @@ jobs:
       run: |
             git reset --hard
             make bossac
-            mkdir qbossa-${{ steps.tag.outputs.tag }}
-            cp bin/bossac.exe qbossa-${{ steps.tag.outputs.tag }}/qbossac.exe
-            zip bin/bossac.zip qbossa-${{ steps.tag.outputs.tag }}/*
-            ls qbossa-${{ steps.tag.outputs.tag }}
+            mkdir staging
+            cp bin/bossac.exe staging/${{matrix.asset_name}}-${{ steps.tag.outputs.tag }}${{matrix.suffix}}${{matrix.ext}}
+            zip -j bin/release${{matrix.archive_ext}} staging/${{matrix.asset_name}}-${{ steps.tag.outputs.tag }}${{matrix.suffix}}${{matrix.ext}}
+            mv bin/release${{matrix.archive_ext}} staging/${{matrix.asset_name}}-${{ steps.tag.outputs.tag }}${{matrix.suffix}}${{matrix.archive_ext}}
 
     - name: make (not win)
       if: ${{matrix.os != 'windows-latest'}}
       run: |
           make bossac ${{matrix.make_flags}}
-          mkdir qbossa-${{ steps.tag.outputs.tag }}
-          cp bin/bossac qbossa-${{ steps.tag.outputs.tag }}/qbossac
-          tar -cjf bin/bossac.tar.bz2 qbossa-${{ steps.tag.outputs.tag }}
-          ls qbossa-${{ steps.tag.outputs.tag }}
+          mkdir staging
+          cp bin/bossac staging/${{matrix.asset_name}}-${{ steps.tag.outputs.tag }}${{matrix.suffix}}
+          tar -cjf staging/${{matrix.asset_name}}-${{ steps.tag.outputs.tag }}${{matrix.suffix}}${{matrix.archive_ext}} -C staging ${{matrix.asset_name}}-${{ steps.tag.outputs.tag }}${{matrix.suffix}}
 
     - name: Upload Release Assets
-      uses: softprops/action-gh-release@v2
+      uses: softprops/action-gh-release@v3
       with:
           tag_name: ${{ steps.tag.outputs.tag }}
           name: ${{ steps.tag.outputs.tag }}
           body: "Release ${{ steps.tag.outputs.tag }} of qNimble version of BOSSA"
-          files: |
-            ${{matrix.artifact_name}}${{matrix.ext}}
-            ${{matrix.artifact_name}}${{matrix.archive_ext}}
+          files: staging/*
       env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
