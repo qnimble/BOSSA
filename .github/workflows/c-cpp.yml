@@ -71,18 +71,19 @@ jobs:
       run: |
             git reset --hard
             make bossac
-            mkdir staging
+            mkdir -p staging/qbossa-${{ steps.tag.outputs.tag }}
+            cp bin/bossac.exe staging/qbossa-${{ steps.tag.outputs.tag }}/qbossac.exe
             cp bin/bossac.exe staging/${{matrix.asset_name}}-${{ steps.tag.outputs.tag }}${{matrix.suffix}}${{matrix.ext}}
-            zip -j bin/release${{matrix.archive_ext}} staging/${{matrix.asset_name}}-${{ steps.tag.outputs.tag }}${{matrix.suffix}}${{matrix.ext}}
-            mv bin/release${{matrix.archive_ext}} staging/${{matrix.asset_name}}-${{ steps.tag.outputs.tag }}${{matrix.suffix}}${{matrix.archive_ext}}
+            cd staging && zip ${{matrix.asset_name}}-${{ steps.tag.outputs.tag }}${{matrix.suffix}}${{matrix.archive_ext}} qbossa-${{ steps.tag.outputs.tag }}/qbossac.exe
 
     - name: make (not win)
       if: ${{matrix.os != 'windows-latest'}}
       run: |
           make bossac ${{matrix.make_flags}}
-          mkdir staging
+          mkdir -p staging/qbossa-${{ steps.tag.outputs.tag }}
+          cp bin/bossac staging/qbossa-${{ steps.tag.outputs.tag }}/qbossac
+          tar -cjf staging/${{matrix.asset_name}}-${{ steps.tag.outputs.tag }}${{matrix.suffix}}${{matrix.archive_ext}} -C staging qbossa-${{ steps.tag.outputs.tag }}/qbossac
           cp bin/bossac staging/${{matrix.asset_name}}-${{ steps.tag.outputs.tag }}${{matrix.suffix}}
-          tar -cjf staging/${{matrix.asset_name}}-${{ steps.tag.outputs.tag }}${{matrix.suffix}}${{matrix.archive_ext}} -C staging ${{matrix.asset_name}}-${{ steps.tag.outputs.tag }}${{matrix.suffix}}
 
     - name: Upload Release Assets
       uses: softprops/action-gh-release@v3
