@@ -57,20 +57,24 @@ jobs:
       if: ${{ startsWith(matrix.os, 'ubuntu') }}
       run: sudo apt-get update; sudo apt-get install gcc-multilib g++-multilib
 
-    - name: get msys2
-      uses: msys2/setup-msys2@v2
-      if: ${{matrix.os == 'windows-latest'}}
+    - name: install mingw (win)
+      uses: egor-tensin/setup-mingw@v3
+      if: ${{startsWith(matrix.os, 'windows')}}
       with:
-          msystem: ${{ matrix.msystem }}
-          install: git zip base-devel binutils mingw-w64-${{ matrix.arch }}-toolchain
-          release: false
+          platform: ${{ matrix.arch }}
+          version: 14.2.0
+
+    - name: install make and zip (win)
+      if: ${{startsWith(matrix.os, 'windows')}}
+      run: choco install make zip --no-progress -y
+      shell: pwsh
 
     - name: make (win)
-      if: ${{matrix.os == 'windows-latest'}}
-      shell: msys2 {0}
+      if: ${{startsWith(matrix.os, 'windows')}}
+      shell: bash
       run: |
-            git reset --hard
-            make bossac
+            g++ --version
+            make bossac OS=WIN
             mkdir -p staging/qbossa-${{ steps.tag.outputs.tag }}
             cp bin/bossac.exe staging/qbossa-${{ steps.tag.outputs.tag }}/qbossac.exe
             cp bin/bossac.exe staging/${{matrix.asset_name}}-${{ steps.tag.outputs.tag }}${{matrix.suffix}}${{matrix.ext}}
@@ -79,6 +83,7 @@ jobs:
     - name: make (not win)
       if: ${{matrix.os != 'windows-latest'}}
       run: |
+          g++ --version
           make bossac ${{matrix.make_flags}}
           mkdir -p staging/qbossa-${{ steps.tag.outputs.tag }}
           cp bin/bossac staging/qbossa-${{ steps.tag.outputs.tag }}/qbossac
